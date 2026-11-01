@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
-import websockets
 from config import settings
+from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -12,14 +12,14 @@ logger = logging.getLogger(__name__)
 class ArmClient:
     def __init__(self, ws_url: str | None = None, num_servos: int = 4):
         self.uri = ws_url or settings.esp32_ws_url
-        self._ws: websockets.WebSocketClientProtocol | None = None
+        self._ws: ClientConnection | None = None
         self._lock = asyncio.Lock()
         self.num_servos = num_servos
         self.current_angles: list[int] = [90] * num_servos
 
     async def connect(self) -> None:
         try:
-            self._ws = await websockets.connect(self.uri, ping_interval=None)
+            self._ws = await connect(self.uri, ping_interval=None)
             logger.info(f"Успешный коннект к манипулятору: {self.uri}")
         except Exception as e:
             logger.error(f"Ошибка подключения к {self.uri}: {e}")
@@ -42,7 +42,7 @@ class ArmClient:
         self._validate_angles(angles)
 
         async with self._lock:
-            if self._ws is None or self._ws.closed:
+            if self._ws is None:
                 await self.connect()
 
             try:
