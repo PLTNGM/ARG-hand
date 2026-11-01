@@ -1,3 +1,6 @@
+#for esp32 logic
+secrets.h
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
